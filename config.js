@@ -10,7 +10,7 @@ const config = {
     "webview_width": 1280,
     "second_display_height": 800,
     "second_display_width": 1280,
-    "run_on_single_display": false,
+    "run_on_single_display": true,
     "non_full_screen_height": 800,
     "non_full_screen_width": 640,
     "load_debug_page": false,
