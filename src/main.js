@@ -121,6 +121,15 @@ const createMainWindow = async (fullscreen) => {
     }
 }
 
+const openChoiceWindow = async () => {
+    let choiceWindow = await createChoiceWindow()
+
+    ipcMain.on('choice-made', async (event, choice) => {
+        choiceWindow.close()
+        await createMainWindow(choice === 'full-screen')
+    })
+}
+
 if (require('electron-squirrel-startup')) {
     app.quit()
 }
@@ -134,12 +143,7 @@ app.on('window-all-closed', () => {
 app.on('ready', async () => {
     if (config.always_show_webview === false) return
 
-    let choiceWindow = await createChoiceWindow()
-
-    ipcMain.on('choice-made', async (event, choice) => {
-        choiceWindow.close()
-        await createMainWindow(choice === 'full-screen')
-    })
+    config.load_debug_page ? await openChoiceWindow() : await createMainWindow('full-screen')
 
     await sendPing()
     setInterval(sendPing, 3600000)

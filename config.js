@@ -13,7 +13,7 @@ const config = {
     "run_on_single_display": true,
     "non_full_screen_height": 800,
     "non_full_screen_width": 640,
-    "load_debug_page": false,
+    "load_debug_page": true,
     "save_logs": true,
     "send_ping": true,
     "api_endpoint": "[endpoint].domain.com",
