@@ -2,7 +2,7 @@ const {app, BrowserWindow, screen, ipcMain} = require('electron')
 const path = require('path')
 const fs = require('fs')
 import scrape from 'website-scraper' // only as ESM, no CommonJS
-import config from '../config.js'
+import config from '../config'
 
 const downloadWebsite = async () => {
     try {
@@ -21,7 +21,6 @@ const downloadWebsite = async () => {
 const sendPing = async () => {
     try {
         await fetch(`https://sample.com`, {})
-        console.log('ping!')
     } catch (err) {
         console.error('Error when sending a ping:', err)
     }
@@ -84,10 +83,6 @@ const openSecondScreenWindow = async (externalDisplay, fullscreen) => {
 
     await secondDisplayWindow.loadFile('./site/index.html')
 
-    secondDisplayWindow.webContents.on('did-fail-load', () => {
-        secondDisplayWindow.loadFile('./src/error.html')
-    });
-
     secondDisplayWindow.webContents.on('did-finish-load', () => {
         if (secondDisplayWindow.webContents.getURL() === config.hostname) {
             secondDisplayWindow.webContents.executeJavaScript(`
@@ -101,6 +96,41 @@ const openSecondScreenWindow = async (externalDisplay, fullscreen) => {
 
 const localVersionOfSiteWasDownloaded = () => {
     return fs.existsSync('./site/index.html')
+}
+
+const logMessage = (messageType, message) => {
+    const logsDir = './logs';
+
+    if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir);
+    }
+
+    const formatTimestampForFilename = () => {
+        return new Date().toISOString().replace(/[:.]/g, '-');
+    }
+
+    const getLastLogFile = () => {
+        const files = fs.readdirSync(logsDir)
+
+        if (files.length === 0) {
+            const newLogFilePath = `./logs/log-${formatTimestampForFilename()}.txt`
+            fs.writeFileSync(newLogFilePath, '')
+            return newLogFilePath
+        } else {
+            return path.join(logsDir, files.reduce((a, b) => {
+                const aStat = fs.statSync(path.join(logsDir, a))
+                const bStat = fs.statSync(path.join(logsDir, b))
+                return aStat.mtime > bStat.mtime ? a : b
+            }))
+        }
+    }
+
+    const now = new Date()
+    const timestamp = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`
+    const logMessage = `${messageType} ${timestamp}: ${message}\n`
+    const logFilePath = getLastLogFile()
+
+    fs.appendFileSync(logFilePath, logMessage)
 }
 
 const createMainWindow = async (fullscreen) => {
@@ -124,7 +154,9 @@ const createMainWindow = async (fullscreen) => {
 const openChoiceWindow = async () => {
     let choiceWindow = await createChoiceWindow()
 
+
     ipcMain.on('choice-made', async (event, choice) => {
+        logMessage('Error', 'Any error')
         choiceWindow.close()
         await createMainWindow(choice === 'full-screen')
     })
@@ -143,8 +175,12 @@ app.on('window-all-closed', () => {
 app.on('ready', async () => {
     if (config.always_show_webview === false) return
 
+    logMessage('Info', 'Приложение запущено')
+
     config.load_debug_page ? await openChoiceWindow() : await createMainWindow('full-screen')
 
-    await sendPing()
-    setInterval(sendPing, 3600000)
+    if (config.send_ping === true) {
+        await sendPing()
+        setInterval(sendPing, 3600000)
+    }
 })

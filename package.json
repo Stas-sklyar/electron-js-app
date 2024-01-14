@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
-    "website-scraper": "^5.3.1",
-    "winston": "^3.11.0"
+    "website-scraper": "^5.3.1"
   }
 }

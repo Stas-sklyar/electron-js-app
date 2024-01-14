@@ -21,4 +21,4 @@ const config = {
     "app_version": 123
 }
 
-export default config;
+export default config
