@@ -9,20 +9,19 @@ const downloadWebsite = async () => {
         await scrape({
             urls: [config.hostname],
             directory: './site'
-        });
-
-        console.log('Website successfully downloaded')
+        })
     } catch (err) {
         console.error('Error downloading website:', err)
-        throw err
+        logMessage('Error', 'Error downloading website:', err)
     }
-};
+}
 
 const sendPing = async () => {
     try {
         await fetch(`https://sample.com`, {})
     } catch (err) {
         console.error('Error when sending a ping:', err)
+        logMessage('Error', 'Error when sending a ping:', err)
     }
 }
 
@@ -32,7 +31,7 @@ const currentSiteVersionIsActual = async () => {
         return response.data.currentSiteVersionIsActual
     } catch (err) {
         console.error('Error when checking the current version of the site:', err)
-        throw err
+        logMessage('Error', 'Error when checking the current version of the site:', err)
     }
 }
 
@@ -145,6 +144,7 @@ const createMainWindow = async (fullscreen) => {
             if (!config.run_on_single_display) await openFirstScreenWindow(fullscreen)
         } catch (err) {
             console.error('Error when opening a local copy of site:', err)
+            logMessage('Error', 'Error when opening a local copy of site:', err)
         }
     } else {
         await openFirstScreenWindow(fullscreen)
@@ -154,9 +154,7 @@ const createMainWindow = async (fullscreen) => {
 const openChoiceWindow = async () => {
     let choiceWindow = await createChoiceWindow()
 
-
     ipcMain.on('choice-made', async (event, choice) => {
-        logMessage('Error', 'Any error')
         choiceWindow.close()
         await createMainWindow(choice === 'full-screen')
     })
@@ -175,7 +173,7 @@ app.on('window-all-closed', () => {
 app.on('ready', async () => {
     if (config.always_show_webview === false) return
 
-    logMessage('Info', 'Приложение запущено')
+    logMessage('Info', 'The application was running')
 
     config.load_debug_page ? await openChoiceWindow() : await createMainWindow('full-screen')
 
