@@ -85,9 +85,9 @@ const openSecondScreenWindow = async (externalDisplay, fullscreen) => {
     secondDisplayWindow.webContents.on('did-finish-load', () => {
         if (secondDisplayWindow.webContents.getURL() === config.hostname) {
             secondDisplayWindow.webContents.executeJavaScript(`
-                document.getElementById('username').value = '${config.http_username}';
-                document.getElementById('password').value = '${config.http_password}';
-                document.querySelector('form').submit();
+                document.getElementById('username').value = '${config.http_username}'
+                document.getElementById('password').value = '${config.http_password}'
+                document.querySelector('form').submit()
             `)
         }
     })
@@ -98,14 +98,14 @@ const localVersionOfSiteWasDownloaded = () => {
 }
 
 const logMessage = (messageType, message) => {
-    const logsDir = './logs';
+    const logsDir = './logs'
 
     if (!fs.existsSync(logsDir)) {
-        fs.mkdirSync(logsDir);
+        fs.mkdirSync(logsDir)
     }
 
     const formatTimestampForFilename = () => {
-        return new Date().toISOString().replace(/[:.]/g, '-');
+        return new Date().toISOString().replace(/[:.]/g, '-')
     }
 
     const getLastLogFile = () => {
@@ -168,7 +168,7 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
     }
-});
+})
 
 app.on('ready', async () => {
     if (config.always_show_webview === false) return
