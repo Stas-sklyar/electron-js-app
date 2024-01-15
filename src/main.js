@@ -15,16 +15,13 @@ const downloadWebsite = async () => {
         logMessage('Error', 'Error downloading website:', err)
     }
 }
-
 const sendPing = async () => {
     try {
         await fetch(`https://sample.com`, {})
     } catch (err) {
-        console.error('Error when sending a ping:', err)
-        logMessage('Error', 'Error when sending a ping:', err)
+        await handleError('Error when sending a ping: ' + err)
     }
 }
-
 const currentSiteVersionIsActual = async () => {
     try {
         const response = await fetch(`https://sample.com`, {})
@@ -34,7 +31,6 @@ const currentSiteVersionIsActual = async () => {
         logMessage('Error', 'Error when checking the current version of the site:', err)
     }
 }
-
 const createChoiceWindow = async () => {
     const choiceWindow = new BrowserWindow({
         width: 400,
@@ -48,7 +44,6 @@ const createChoiceWindow = async () => {
     await choiceWindow.loadFile('./src/choice.html')
     return choiceWindow
 }
-
 const openFirstScreenWindow = async (fullscreen) => {
     let firstDisplayWindow = new BrowserWindow({
         x: 0,
@@ -68,6 +63,17 @@ const openFirstScreenWindow = async (fullscreen) => {
     await firstDisplayWindow.loadFile('./site/index.html')
 }
 
+const autoLogin = (secondDisplayWindow) => {
+    secondDisplayWindow.webContents.on('did-finish-load', () => {
+        if (secondDisplayWindow.webContents.getURL() === config.hostname) {
+            secondDisplayWindow.webContents.executeJavaScript(`
+                document.getElementById('username').value = '${config.http_username}'
+                document.getElementById('password').value = '${config.http_password}'
+                document.querySelector('form').submit()
+            `)
+        }
+    })
+}
 const openSecondScreenWindow = async (externalDisplay, fullscreen) => {
     let secondDisplayWindow = new BrowserWindow({
         x: externalDisplay.bounds.x,
@@ -81,22 +87,11 @@ const openSecondScreenWindow = async (externalDisplay, fullscreen) => {
     })
 
     await secondDisplayWindow.loadFile('./site/index.html')
-
-    secondDisplayWindow.webContents.on('did-finish-load', () => {
-        if (secondDisplayWindow.webContents.getURL() === config.hostname) {
-            secondDisplayWindow.webContents.executeJavaScript(`
-                document.getElementById('username').value = '${config.http_username}'
-                document.getElementById('password').value = '${config.http_password}'
-                document.querySelector('form').submit()
-            `)
-        }
-    })
+    autoLogin(secondDisplayWindow)
 }
-
 const localVersionOfSiteWasDownloaded = () => {
     return fs.existsSync('./site/index.html')
 }
-
 const logMessage = (messageType, message) => {
     const logsDir = './logs'
 
@@ -131,7 +126,24 @@ const logMessage = (messageType, message) => {
 
     fs.appendFileSync(logFilePath, logMessage)
 }
+const handleError = async (errorMessage) => {
+    console.error(errorMessage)
+    logMessage('Error', errorMessage)
 
+    closeAllWindows()
+    const window = new BrowserWindow({
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    })
+    await window.loadFile('./src/error.html')
+    window.webContents.send('display-error', errorMessage)
+}
+const closeAllWindows = () => {
+    const windows = BrowserWindow.getAllWindows()
+    windows.forEach(window => window.close())
+}
 const createMainWindow = async (fullscreen) => {
     const displays = screen.getAllDisplays()
     const secondScreensParams = displays.find(display => display.bounds.x !== 0 || display.bounds.y !== 0)
@@ -150,7 +162,6 @@ const createMainWindow = async (fullscreen) => {
         await openFirstScreenWindow(fullscreen)
     }
 }
-
 const openChoiceWindow = async () => {
     let choiceWindow = await createChoiceWindow()
 
@@ -163,13 +174,11 @@ const openChoiceWindow = async () => {
 if (require('electron-squirrel-startup')) {
     app.quit()
 }
-
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
     }
 })
-
 app.on('ready', async () => {
     if (config.always_show_webview === false) return
 
