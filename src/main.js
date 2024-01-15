@@ -60,7 +60,6 @@ const openFirstScreenWindow = async (fullscreen) => {
 
     await firstDisplayWindow.loadFile('./site/index.html')
 }
-
 const autoLogin = (secondDisplayWindow) => {
     secondDisplayWindow.webContents.on('did-finish-load', () => {
         if (secondDisplayWindow.webContents.getURL() === config.hostname) {
@@ -90,38 +89,35 @@ const openSecondScreenWindow = async (externalDisplay, fullscreen) => {
 const localVersionOfSiteWasDownloaded = () => {
     return fs.existsSync('./site/index.html')
 }
+const formatTimestampForFilename = () => {
+    return new Date().toISOString().replace(/[:.]/g, '-')
+}
+const getLastLogFile = (logsDir) => {
+    const files = fs.readdirSync(logsDir)
+
+    if (files.length === 0) {
+        const newLogFilePath = `./logs/log-${formatTimestampForFilename()}.txt`
+        fs.writeFileSync(newLogFilePath, '')
+        return newLogFilePath
+    } else {
+        return path.join(logsDir, files.reduce((a, b) => {
+            const aStat = fs.statSync(path.join(logsDir, a))
+            const bStat = fs.statSync(path.join(logsDir, b))
+            return aStat.mtime > bStat.mtime ? a : b
+        }))
+    }
+}
 const logMessage = (messageType, message) => {
     const logsDir = './logs'
+    const now = new Date()
+    const timestamp = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`
+    const logMessage = `${messageType} ${timestamp}: ${message}\n`
 
     if (!fs.existsSync(logsDir)) {
         fs.mkdirSync(logsDir)
     }
 
-    const formatTimestampForFilename = () => {
-        return new Date().toISOString().replace(/[:.]/g, '-')
-    }
-
-    const getLastLogFile = () => {
-        const files = fs.readdirSync(logsDir)
-
-        if (files.length === 0) {
-            const newLogFilePath = `./logs/log-${formatTimestampForFilename()}.txt`
-            fs.writeFileSync(newLogFilePath, '')
-            return newLogFilePath
-        } else {
-            return path.join(logsDir, files.reduce((a, b) => {
-                const aStat = fs.statSync(path.join(logsDir, a))
-                const bStat = fs.statSync(path.join(logsDir, b))
-                return aStat.mtime > bStat.mtime ? a : b
-            }))
-        }
-    }
-
-    const now = new Date()
-    const timestamp = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`
-    const logMessage = `${messageType} ${timestamp}: ${message}\n`
-    const logFilePath = getLastLogFile()
-
+    const logFilePath = getLastLogFile(logsDir)
     fs.appendFileSync(logFilePath, logMessage)
 }
 const handleError = async (errorMessage) => {
