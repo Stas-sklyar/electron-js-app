@@ -11,8 +11,7 @@ const downloadWebsite = async () => {
             directory: './site'
         })
     } catch (err) {
-        console.error('Error downloading website:', err)
-        logMessage('Error', 'Error downloading website:', err)
+        await handleError('Error downloading website:', err)
     }
 }
 const sendPing = async () => {
@@ -27,8 +26,7 @@ const currentSiteVersionIsActual = async () => {
         const response = await fetch(`https://sample.com`, {})
         return response.data.currentSiteVersionIsActual
     } catch (err) {
-        console.error('Error when checking the current version of the site:', err)
-        logMessage('Error', 'Error when checking the current version of the site:', err)
+        await handleError('Error when checking the current version of the site:', err)
     }
 }
 const createChoiceWindow = async () => {
@@ -155,8 +153,7 @@ const createMainWindow = async (fullscreen) => {
             await openSecondScreenWindow(secondScreensParams, fullscreen)
             if (!config.run_on_single_display) await openFirstScreenWindow(fullscreen)
         } catch (err) {
-            console.error('Error when opening a local copy of site:', err)
-            logMessage('Error', 'Error when opening a local copy of site:', err)
+            await handleError('Error when opening a local copy of site:', err)
         }
     } else {
         await openFirstScreenWindow(fullscreen)
